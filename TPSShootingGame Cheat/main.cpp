@@ -7,6 +7,7 @@
 DWORD PID;
 HANDLE ProcessHandle;
 uintptr_t BaseAddress;
+bool fly;
 
 int main()
 {
@@ -37,7 +38,9 @@ int main()
 		uintptr_t PlayerController = read<uintptr_t>(ProcessHandle, LocalPlayer + 0x30);
 		uintptr_t PlayerCameraManager = read<uintptr_t>(ProcessHandle, PlayerController + 0x2b8);
 		uintptr_t Pawn = read<uintptr_t>(ProcessHandle, PlayerController + 0x250);
-		
+		DWORD_PTR RootComponent = read<DWORD_PTR>(ProcessHandle, Pawn + 0x130);
+		Vector3 PawnRelativeLocation = read<Vector3>(ProcessHandle, RootComponent + 0x11c);
+
 		if (GetAsyncKeyState(VK_LSHIFT))
 		{
 			write<float>(ProcessHandle, Pawn + 0x98, 2);
@@ -48,5 +51,50 @@ int main()
 		}
 
 		write<float>(ProcessHandle, PlayerCameraManager + 0x238 + 0x4, 130);
+
+		if (GetAsyncKeyState(VK_NUMPAD1) & 1)
+		{
+			fly = !fly;
+
+			if (fly)
+			{
+				Beep(500, 500);
+			}
+			else
+			{
+				Beep(300, 500);
+			}
+		}
+
+		if (fly)
+		{
+			if (GetAsyncKeyState('W'))
+			{
+				PawnRelativeLocation.x += 0.1;
+			}
+			if (GetAsyncKeyState('S'))
+			{
+				PawnRelativeLocation.x -= 0.1;
+			}
+			if (GetAsyncKeyState('A'))
+			{
+				PawnRelativeLocation.y -= 0.1;
+			}
+			if (GetAsyncKeyState('D'))
+			{
+				PawnRelativeLocation.y += 0.1;
+			}
+			if (GetAsyncKeyState(VK_SPACE))
+			{
+				PawnRelativeLocation.z += 0.1;
+			}
+			if (GetAsyncKeyState(VK_LSHIFT))
+			{
+				PawnRelativeLocation.z -= 0.1;
+			}
+
+			write<Vector3>(ProcessHandle, RootComponent + 0x11c, PawnRelativeLocation);
+			write<char>(ProcessHandle, RootComponent + 0x14c, 0);
+		}
 	}
 }
